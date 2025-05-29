@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: '3.9.13'
+  PYTHON_VERSION: '3.13.3'
 
 jobs:
   pre_job:
