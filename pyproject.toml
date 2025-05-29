@@ -1,0 +1,33 @@
+[project]
+name = "image_blurring_pipeline_python"
+version = "1.0"
+description = "An image pipeline for detecting motion and blurring the moving ROIs"
+authors = [
+    { name="Maor Grab", email="maor.grab@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["image", "processing", "motion", "detection", "python"]
+license = "MIT"
+license-files = ["LICENSE"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["image_blurring_pipeline_python"]
+
+[project.scripts]
+image_blurring_pipeline_python = "image_blurring_pipeline_python.__main__:main"
+
+[project.urls]
+"Homepage" = "https://github.com/MaorGrab/image_blurring_pipeline_python"
+"Repository" = "https://github.com/MaorGrab/image_blurring_pipeline_python"
+
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[tool.pylint.typecheck]
+# List of members which are set dynamically and missed by pylint inference
+# system, and so shouldn't trigger E1101 when accessed. Python regular
+# expressions are accepted.
+generated-members = ["cv2.*"]

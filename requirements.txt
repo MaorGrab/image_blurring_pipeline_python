@@ -1,5 +1,5 @@
-python-dotenv
 pylint
 pytest
-requests
 opencv-python
+imutils
+matplotlib
