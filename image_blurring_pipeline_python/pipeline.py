@@ -99,17 +99,15 @@ def worker(input_queue, output_queue, log_queue):
         frame_id, frame = item
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         if prev_frame is None:
+            output_queue.put((frame_id, frame))
             prev_frame = gray_frame
             continue
         contours = get_contours(gray_frame, prev_frame)
         prev_frame = gray_frame
         for contour in contours:
-            peri = cv2.arcLength(contour,True)
-            apprx = cv2.approxPolyDP(contour, 0.1*peri, True)
-            x,y,w,h = cv2.boundingRect(apprx)
-            # frame = mosaic_roi(frame, x, y, w, h)
-            if frame is None:
-                continue
+            x,y,w,h = cv2.boundingRect(contour)
+            if w * h > 25:
+                frame = mosaic_roi(frame, x, y, w, h)
         output_queue.put((frame_id, frame))
         logger.info(f"Worker processed frame {frame_id}")
     output_queue.put(None)
@@ -124,26 +122,6 @@ def displayer(output_path, output_queue, total_frames, log_queue):
     buffer = {}  # frame_id: frame
     next_frame_id_to_record = 0
 
-    # Assuming frame properties are known; adjust as needed
-    ##############
-    cap = cv2.VideoCapture('data/example.mp4')
-    if not cap.isOpened():
-        print("Error opening video file")
-        return
-
-    # Get frame properties
-    # fps = cap.get(cv2.CAP_PROP_FPS)
-    # width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    # height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    # out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-    # cap.release()
-    ##############
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    fps = 25.0
-    width, height = 1280, 720
-    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-
     num_workers_left = NUM_WORKERS
 
     while True:
@@ -157,26 +135,23 @@ def displayer(output_path, output_queue, total_frames, log_queue):
             continue
         frame_id, frame = item
         if frame_id == next_frame_id_to_record:
-            out.write(frame)
+            cv2.imshow('Censored Video', frame)
             next_frame_id_to_record += 1
             logger.info(f"wrote frame {frame_id}")
         else:
             buffer[frame_id] = frame
             logger.info(f"buffered frame {frame_id}")
 
-        # cv2.imshow('Censored Video', frame)
-
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
-
         while next_frame_id_to_record in buffer:
-            out.write(buffer.pop(next_frame_id_to_record))
+            cv2.imshow('Censored Video', frame)
             logger.info(f"wrote frame {next_frame_id_to_record} from buffer")
             next_frame_id_to_record += 1
 
-    out.release()
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
     logger.info("displayer finished writing video.")
-    # cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
 
 def main(input_video_path, output_video_path):
     manager = multiprocessing.Manager()
