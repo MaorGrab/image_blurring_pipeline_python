@@ -1,10 +1,12 @@
-import cv2
-import imutils
 from datetime import datetime, timedelta
 from multiprocessing import Process
+
+import cv2
+
 from image_blurring_pipeline_python.logger.setup_process_logger import setup_process_logger
 
 MIN_DETECTION_AREA = 25
+
 
 class Displayer(Process):
     def __init__(self, output_queue, log_queue):
@@ -16,36 +18,35 @@ class Displayer(Process):
         """
         Writes processed frames to the output video file.
         """
-        self.logger = setup_process_logger(self.log_queue)
+        logger = setup_process_logger(self.log_queue)
 
         buffer = {}  # frame_id: frame
         next_frame_id_to_record = 0
 
 
         while True:
-            self.logger.info(f'[displayer] consuming')
             item = self.output_queue.get()
             if item is None:
-                self.logger.info(f'[displayer] item is None. breaking')
+                logger.debug('detector got item None')
                 break
             frame_id, frame, timestamp_ms, contours = item
             if frame_id == next_frame_id_to_record:
                 self._alter_image_and_display(frame, timestamp_ms, contours)
                 next_frame_id_to_record += 1
-                self.logger.info(f"wrote frame {frame_id}")
+                logger.debug("displayed frame %s", frame_id)
             else:
                 buffer[frame_id] = frame
-                self.logger.info(f"buffered frame {frame_id}")
+                logger.debug("buffered frame %s", frame_id)
 
             while next_frame_id_to_record in buffer:
                 self._alter_image_and_display(frame, timestamp_ms, contours)
-                self.logger.info(f"wrote frame {next_frame_id_to_record} from buffer")
+                logger.debug("wrote frame %s from buffer", next_frame_id_to_record)
                 next_frame_id_to_record += 1
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+                break
 
-        self.logger.info("displayer finished writing video.")
+        logger.info("displayer finished.")
         cv2.destroyAllWindows()
 
     def _alter_image_and_display(self, frame, timestamp_ms, contours):

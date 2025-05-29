@@ -7,7 +7,7 @@ class Logger(Process):
         super().__init__()
         self.log_queue = log_queue
 
-        
+
     def run(self):
         """
         Logger process that receives log records from the log_queue and logs them.

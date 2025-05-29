@@ -1,7 +1,10 @@
+from multiprocessing import Process
+
 import cv2
 import imutils
-from multiprocessing import Process
+
 from image_blurring_pipeline_python.logger.setup_process_logger import setup_process_logger
+
 
 class Detector(Process):
     def __init__(self, input_queue, output_queue, log_queue):
@@ -14,14 +17,14 @@ class Detector(Process):
         """
         Processes frames: detects contours and applies mosaic.
         """
-        self.logger = setup_process_logger(self.log_queue)
+        logger = setup_process_logger(self.log_queue)
 
         prev_frame = None
 
         while True:
             item = self.input_queue.get()
             if item is None:
-                self.logger.info('detector got item None')
+                logger.debug('detector got item None')
                 break
             frame_id, frame, timestamp_ms = item
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -32,8 +35,9 @@ class Detector(Process):
             contours = self._get_contours(gray_frame, prev_frame)
             prev_frame = gray_frame
             self.output_queue.put((frame_id, frame, timestamp_ms, contours))
-            self.logger.info(f"detector processed frame {frame_id}")
+            logger.debug("detector processed frame %s", frame_id)
         self.output_queue.put(None)
+        logger.info("detector finished.")
 
     @staticmethod
     def _get_contours(current_frame, prev_frame) -> tuple:
