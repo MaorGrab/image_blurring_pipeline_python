@@ -28,7 +28,7 @@ def process_video(input_path, output_path):
     fps = cap.get(cv2.CAP_PROP_FPS)
     width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
     while True:
@@ -63,6 +63,6 @@ def process_video(input_path, output_path):
 
 if __name__ == '__main__':
     INPUT_VIDEO = 'data/example.mp4'
-    OUTPUT_VIDEO = 'data/example_censored.avi'
+    OUTPUT_VIDEO = INPUT_VIDEO.replace('.', '_censored.')
 
     process_video(INPUT_VIDEO, OUTPUT_VIDEO)
