@@ -53,6 +53,8 @@ class Displayer(Process):
             x, y, w, h = cv2.boundingRect(contour)
             if w * h > constants.MIN_DETECTION_AREA:
                 frame = self._mosaic_roi(frame, x, y, w, h)
+            if constants.DISPLAY_BOUNDING_BOXES:
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
         timestamp = self._get_timestamp_in_format(timestamp_ms)
         cv2.putText(frame, timestamp, (10, 20),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
