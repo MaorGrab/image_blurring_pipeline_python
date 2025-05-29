@@ -23,6 +23,7 @@ def process_video(input_path, output_path):
     if not cap.isOpened():
         print("Error opening video file")
         return
+    
 
     # Get frame properties
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -35,6 +36,9 @@ def process_video(input_path, output_path):
         ret, frame = cap.read()
         if not ret:
             break
+
+        timestamp_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
+        print(f"Timestamp: {timestamp_ms:.2f} ms")
 
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         if prev_frame is None:

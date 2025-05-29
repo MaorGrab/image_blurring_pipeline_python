@@ -5,8 +5,10 @@ import logging
 import logging.handlers
 import multiprocessing
 import sys
+from datetime import datetime, timedelta
 
-NUM_WORKERS = 1
+
+MIN_DETECTION_AREA = 25
 
 def logger_process(log_queue):
     """
@@ -26,9 +28,9 @@ def logger_process(log_queue):
             break
         logger.handle(record)
 
-def setup_worker_logger(log_queue):
+def setup_process_logger(log_queue):
     """
-    Sets up a logger for worker processes to send logs to the log_queue.
+    Sets up a logger for a processes to send logs to the log_queue.
     """
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -45,16 +47,19 @@ def get_contours(current_frame, prev_frame) -> tuple:
 def mosaic_roi(frame, x, y, w, h):
     roi = frame[y:y+h, x:x+w]
     # Resize to tiny then back up = pixelation
-    small = cv2.resize(roi, (8, 8), interpolation=cv2.INTER_LINEAR)
+    small = cv2.resize(roi, (4, 4), interpolation=cv2.INTER_LINEAR)
     mosaic = cv2.resize(small, (w, h), interpolation=cv2.INTER_NEAREST)
     frame[y:y+h, x:x+w] = mosaic
     return frame
 
-def streamer(input_path, input_queue, total_frames, log_queue):
+def get_timestamp_in_format(timestamp_ms):
+    return (datetime.min + timedelta(milliseconds=timestamp_ms)).strftime('%H:%M:%S.%f')[:-3]
+
+def streamer(input_path, input_queue, log_queue):
     """
     Reads video frames and puts them into the input_queue.
     """
-    setup_worker_logger(log_queue)
+    setup_process_logger(log_queue)
     logger = logging.getLogger()
 
     cap = cv2.VideoCapture(input_path)
@@ -62,31 +67,26 @@ def streamer(input_path, input_queue, total_frames, log_queue):
         logger.error(f"Failed to open video file: {input_path}")
         return
     
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    print(fps, width, height)
-
     frame_id = 0
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-        input_queue.put((frame_id, frame))
+        timestamp_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
+
+        input_queue.put((frame_id, frame, timestamp_ms))
         logger.info(f"Enqueued frame {frame_id}")
         frame_id += 1
 
     cap.release()
     input_queue.put(None)
-    logger.info('streamer put None')
     logger.info("streamer finished reading video.")
-    total_frames.value = frame_id
 
-def worker(input_queue, output_queue, log_queue):
+def detector(input_queue, output_queue, log_queue):
     """
     Processes frames: detects contours and applies mosaic.
     """
-    setup_worker_logger(log_queue)
+    setup_process_logger(log_queue)
     logger = logging.getLogger()
 
     prev_frame = None
@@ -94,48 +94,40 @@ def worker(input_queue, output_queue, log_queue):
     while True:
         item = input_queue.get()
         if item is None:
-            logger.info('Worker got item None')
+            logger.info('detector got item None')
             break
-        frame_id, frame = item
+        frame_id, frame, timestamp_ms = item
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         if prev_frame is None:
-            output_queue.put((frame_id, frame))
+            output_queue.put((frame_id, frame, timestamp_ms, ()))
             prev_frame = gray_frame
             continue
         contours = get_contours(gray_frame, prev_frame)
         prev_frame = gray_frame
-        for contour in contours:
-            x,y,w,h = cv2.boundingRect(contour)
-            if w * h > 25:
-                frame = mosaic_roi(frame, x, y, w, h)
-        output_queue.put((frame_id, frame))
-        logger.info(f"Worker processed frame {frame_id}")
+        output_queue.put((frame_id, frame, timestamp_ms, contours))
+        logger.info(f"detector processed frame {frame_id}")
     output_queue.put(None)
 
-def displayer(output_path, output_queue, total_frames, log_queue):
+def displayer(output_queue, log_queue):
     """
     Writes processed frames to the output video file.
     """
-    setup_worker_logger(log_queue)
+    setup_process_logger(log_queue)
     logger = logging.getLogger()
 
     buffer = {}  # frame_id: frame
     next_frame_id_to_record = 0
 
-    num_workers_left = NUM_WORKERS
 
     while True:
         logger.info(f'[displayer] consuming')
         item = output_queue.get()
         if item is None:
-            num_workers_left -= 1
-            logger.info(f'[displayer] item is None. Workers left: {num_workers_left}')
-            if not num_workers_left:
-                break
-            continue
-        frame_id, frame = item
+            logger.info(f'[displayer] item is None. breaking')
+            break
+        frame_id, frame, timestamp_ms, contours = item
         if frame_id == next_frame_id_to_record:
-            cv2.imshow('Censored Video', frame)
+            _alter_image_and_display(frame, timestamp_ms, contours)
             next_frame_id_to_record += 1
             logger.info(f"wrote frame {frame_id}")
         else:
@@ -143,7 +135,7 @@ def displayer(output_path, output_queue, total_frames, log_queue):
             logger.info(f"buffered frame {frame_id}")
 
         while next_frame_id_to_record in buffer:
-            cv2.imshow('Censored Video', frame)
+            _alter_image_and_display(frame, timestamp_ms, contours)
             logger.info(f"wrote frame {next_frame_id_to_record} from buffer")
             next_frame_id_to_record += 1
 
@@ -153,56 +145,58 @@ def displayer(output_path, output_queue, total_frames, log_queue):
     logger.info("displayer finished writing video.")
     cv2.destroyAllWindows()
 
-def main(input_video_path, output_video_path):
+def _alter_image_and_display(frame, timestamp_ms, contours):
+    for contour in contours:
+        x,y,w,h = cv2.boundingRect(contour)
+        if w * h > MIN_DETECTION_AREA:
+            frame = mosaic_roi(frame, x, y, w, h)
+    timestamp = get_timestamp_in_format(timestamp_ms)
+    cv2.putText(frame, timestamp, (10, 20),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+    cv2.imshow('Censored Video', frame)
+
+def main(input_video_path):
     manager = multiprocessing.Manager()
     input_queue = manager.Queue()
     output_queue = manager.Queue()
     log_queue = manager.Queue()
-    total_frames = manager.Value('i', 0)
 
-    setup_worker_logger(log_queue)
+    setup_process_logger(log_queue)
     logger = logging.getLogger()
 
     logger_proc = multiprocessing.Process(target=logger_process, args=(log_queue,))
     logger_proc.start()
     logger.info('logger process started')
 
-    streamer_proc = multiprocessing.Process(target=streamer, args=(input_video_path, input_queue, total_frames, log_queue))
+    streamer_proc = multiprocessing.Process(target=streamer, args=(input_video_path, input_queue, log_queue))
     streamer_proc.start()
     logger.info('streamer process started')
 
-    num_workers = NUM_WORKERS
-    workers = []
-    for _ in range(num_workers):
-        p = multiprocessing.Process(target=worker, args=(input_queue, output_queue, log_queue))
-        p.start()
-        logger.info('worker process started')
-        workers.append(p)
+    detector_proc = multiprocessing.Process(target=detector, args=(input_queue, output_queue, log_queue))
+    detector_proc.start()
+    logger.info('detector process started')
 
-    displayer_proc = multiprocessing.Process(target=displayer, args=(output_video_path, output_queue, total_frames, log_queue))
+    displayer_proc = multiprocessing.Process(target=displayer, args=(output_queue, log_queue))
     displayer_proc.start()
     logger.info('displayer process started')
 
     logger.info('streamer_proc.join()')
     streamer_proc.join()
+    # input_queue.put(None)
     logger.info('streamer_proc.join() - finished')
-    for _ in range(num_workers):
-        input_queue.put(None)
-    for p in workers:
-        logger.info('p.join()')
-        p.join()
-        logger.info('p.join() - finished')
+
+    logger.info('detector_proc.join()')
+    detector_proc.join()
+    logger.info('detector_proc.join() - finished')
+
     logger.info('displayer_proc.join()')
     displayer_proc.join()
     logger.info('displayer_proc.join() - finished')
+
+    # kill log process
     log_queue.put(None)
-    logger.info('logger_proc.join()')
-    logger_proc.join()
-    logger.info('logger_proc.join() - finished')
 
 
 if __name__ == '__main__':
     INPUT_VIDEO = 'data/example.mp4'
-    OUTPUT_VIDEO = INPUT_VIDEO.replace('.', '_censored_mp.')
-
-    main(INPUT_VIDEO, OUTPUT_VIDEO)
+    main(INPUT_VIDEO)
