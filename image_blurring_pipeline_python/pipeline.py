@@ -1,3 +1,5 @@
+# pylint: skip-file
+# THIS FILE CAN BE EXECUTED AS IS AND IS SAVED FOR BACKUP
 import cv2
 import imutils
 import time

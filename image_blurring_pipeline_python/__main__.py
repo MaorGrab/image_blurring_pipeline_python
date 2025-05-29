@@ -12,7 +12,6 @@ def main(input_video_path):
     output_queue = manager.Queue()
     log_queue = manager.Queue()
 
-
     logger_proc = Logger(log_queue)
     logger_proc.start()
 
@@ -31,17 +30,9 @@ def main(input_video_path):
     displayer_proc.start()
     logger.info('displayer process started')
 
-    logger.info('streamer_proc.join()')
     streamer_proc.join()
-    logger.info('streamer_proc.join() - finished')
-
-    logger.info('detector_proc.join()')
     detector_proc.join()
-    logger.info('detector_proc.join() - finished')
-
-    logger.info('displayer_proc.join()')
     displayer_proc.join()
-    logger.info('displayer_proc.join() - finished')
 
     # kill log process
     log_queue.put(None)

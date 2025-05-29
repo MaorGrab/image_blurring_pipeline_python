@@ -1,3 +1,4 @@
+# pylint: skip-file
 import cv2
 import imutils
 
