@@ -8,7 +8,7 @@ SAMPLE_DATA_PATH = ROOT_DIR / 'data' / 'example.mp4'
 
 # displayer
 MIN_DETECTION_AREA = 25
-DISPLAY_BOUNDING_BOXES = False
+DISPLAY_BOUNDING_BOXES = True
 
 # logger
 LOG_LEVEL = logging.DEBUG
