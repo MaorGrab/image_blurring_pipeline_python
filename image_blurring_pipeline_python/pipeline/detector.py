@@ -15,7 +15,7 @@ class Detector(Process):
 
     def run(self):
         """
-        Processes frames: detects contours and applies mosaic.
+        Processes frames: detects contours and puts them in the output queue.
         """
         logger = setup_process_logger(self.log_queue)
 
@@ -28,7 +28,7 @@ class Detector(Process):
                 break
             frame_id, frame, timestamp_ms = item
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            if prev_frame is None:
+            if prev_frame is None:  # handle first frame
                 self.output_queue.put((frame_id, frame, timestamp_ms, ()))
                 prev_frame = gray_frame
                 continue

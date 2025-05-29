@@ -15,13 +15,12 @@ class Displayer(Process):
 
     def run(self):
         """
-        Writes processed frames to the output video file.
+        Displays processed frames.
         """
         logger = setup_process_logger(self.log_queue)
 
         buffer = {}  # frame_id: frame
         next_frame_id_to_record = 0
-
 
         while True:
             item = self.output_queue.get()
@@ -33,12 +32,13 @@ class Displayer(Process):
                 self._alter_image_and_display(frame, timestamp_ms, contours)
                 next_frame_id_to_record += 1
                 logger.debug("displayed frame %s", frame_id)
-            else:
+            else:  # buffer frame if it didn't arrive at the expected order
                 buffer[frame_id] = frame
                 logger.debug("buffered frame %s", frame_id)
 
-            while next_frame_id_to_record in buffer:
-                self._alter_image_and_display(frame, timestamp_ms, contours)
+            while next_frame_id_to_record in buffer:  # keep outputing buffered frames in order
+                buffered_frame = buffer.pop(next_frame_id_to_record)
+                self._alter_image_and_display(buffered_frame, timestamp_ms, contours)
                 logger.debug("wrote frame %s from buffer", next_frame_id_to_record)
                 next_frame_id_to_record += 1
 
@@ -50,13 +50,13 @@ class Displayer(Process):
 
     def _alter_image_and_display(self, frame, timestamp_ms, contours):
         for contour in contours:
-            x,y,w,h = cv2.boundingRect(contour)
+            x, y, w, h = cv2.boundingRect(contour)
             if w * h > constants.MIN_DETECTION_AREA:
                 frame = self._mosaic_roi(frame, x, y, w, h)
         timestamp = self._get_timestamp_in_format(timestamp_ms)
         cv2.putText(frame, timestamp, (10, 20),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
-        cv2.imshow('Censored Video', frame)
+        cv2.imshow('Blurred Video', frame)
 
     @staticmethod
     def _mosaic_roi(frame, x, y, w, h):

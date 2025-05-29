@@ -55,7 +55,7 @@ jobs:
         run: |
           source .venv/bin/activate
           pip install --upgrade pip
-          # pip install -e .  # Install the package in editable mode
+          pip install -e .  # Install the package in editable mode
           pip install -r requirements.txt
 
       - name: Save virtual environment to cache
