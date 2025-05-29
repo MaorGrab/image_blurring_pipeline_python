@@ -3,4 +3,3 @@ pylint
 pytest
 requests
 opencv-python
-mediapipe
