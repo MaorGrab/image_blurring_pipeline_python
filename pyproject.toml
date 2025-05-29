@@ -1,6 +1,6 @@
 [project]
 name = "image_blurring_pipeline_python"
-version = "0.5"
+version = "1.0"
 description = "An image pipeline for detecting motion and blurring the moving ROIs"
 authors = [
     { name="Maor Grab", email="maor.grab@gmail.com" }

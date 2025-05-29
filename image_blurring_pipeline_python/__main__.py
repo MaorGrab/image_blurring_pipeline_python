@@ -6,6 +6,7 @@ from image_blurring_pipeline_python.pipeline.displayer import Displayer
 from image_blurring_pipeline_python.logger.logger import Logger
 from image_blurring_pipeline_python.logger.setup_process_logger import setup_process_logger
 from image_blurring_pipeline_python.config import constants
+from image_blurring_pipeline_python.cli.parse_args import parse_args
 
 def main(input_video_path):
     manager = multiprocessing.Manager()
@@ -40,4 +41,6 @@ def main(input_video_path):
 
 
 if __name__ == '__main__':
-    main(constants.SAMPLE_DATA_PATH)
+    args = parse_args()
+    input_data_path = args.video_path if args.video_path else constants.SAMPLE_DATA_PATH
+    main(input_data_path)

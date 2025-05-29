@@ -20,6 +20,7 @@ class Streamer(Process):
 
         cap = cv2.VideoCapture(self.input_path)
         if not cap.isOpened():
+            self.input_queue.put(None)
             logger.error("Failed to open video file: %s", self.input_path)
             return
 
