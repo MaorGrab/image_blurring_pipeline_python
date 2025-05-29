@@ -77,10 +77,12 @@ An optional **Logger** process handles log messages cleanly across subprocesses.
 ---
 
 ## Notes
+The `constants.py` file holds some configurable values like:
 
-* Code is modular, typed, and follows Pythonic best practices.
-* Linting configuration included via `.pylintrc`.
-* Constants and parameters are managed under the `config/` directory.
+* `MIN_DETECTION_AREA` (int) - the minimal amount of pixel detection area to display blurring on.
+* `DISPLAY_BOUNDING_BOXES` (bool) - Display bounding boxes around detections or not.
+* `LOG_LEVEL` (str) - Logger logging level to display.
+
 
 ---
 
