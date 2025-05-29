@@ -1,0 +1,27 @@
+[project]
+name = "image_blurring_pipeline_python"
+version = "0.5"
+description = "An image pipeline for detecting motion and blurring the moving ROIs"
+authors = [
+    { name="Maor Grab", email="maor.grab@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["image", "processing", "motion", "detection", "python"]
+license = "MIT"
+license-files = ["LICENSE"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["image_blurring_pipeline_python"]
+
+[project.scripts]
+image_blurring_pipeline_python = "image_blurring_pipeline_python.__main__:main"
+
+[project.urls]
+"Homepage" = "https://github.com/MaorGrab/image_blurring_pipeline_python"
+"Repository" = "https://github.com/MaorGrab/image_blurring_pipeline_python"
+
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"

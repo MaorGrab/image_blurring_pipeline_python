@@ -28,7 +28,7 @@ def logger_process(log_queue):
             break
         logger.handle(record)
 
-def setup_process_logger(log_queue):
+def setup_process_logger(log_queue) -> logging.Logger:
     """
     Sets up a logger for a processes to send logs to the log_queue.
     """
@@ -36,6 +36,7 @@ def setup_process_logger(log_queue):
     logger.setLevel(logging.INFO)
     handler = logging.handlers.QueueHandler(log_queue)
     logger.addHandler(handler)
+    return logger
 
 def get_contours(current_frame, prev_frame) -> tuple:
     diff = cv2.absdiff(current_frame, prev_frame)
