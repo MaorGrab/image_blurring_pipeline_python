@@ -1,0 +1,6 @@
+python-dotenv
+pylint
+pytest
+requests
+python-opencv
+mediapipe
