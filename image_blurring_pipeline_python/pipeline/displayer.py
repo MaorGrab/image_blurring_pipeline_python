@@ -4,8 +4,7 @@ from multiprocessing import Process
 import cv2
 
 from image_blurring_pipeline_python.logger.setup_process_logger import setup_process_logger
-
-MIN_DETECTION_AREA = 25
+from image_blurring_pipeline_python.config import constants
 
 
 class Displayer(Process):
@@ -52,7 +51,7 @@ class Displayer(Process):
     def _alter_image_and_display(self, frame, timestamp_ms, contours):
         for contour in contours:
             x,y,w,h = cv2.boundingRect(contour)
-            if w * h > MIN_DETECTION_AREA:
+            if w * h > constants.MIN_DETECTION_AREA:
                 frame = self._mosaic_roi(frame, x, y, w, h)
         timestamp = self._get_timestamp_in_format(timestamp_ms)
         cv2.putText(frame, timestamp, (10, 20),
