@@ -3,6 +3,7 @@ from multiprocessing import Process
 import cv2
 import imutils
 
+from image_blurring_pipeline_python.models.queue_items import InputItem, OutputItem
 from image_blurring_pipeline_python.logger.logger_manager import configure_process_logger
 
 
@@ -22,20 +23,31 @@ class Detector(Process):
         prev_frame = None
 
         while True:
-            item = self.input_queue.get()
-            if item is None:
+            input_item: InputItem = self.input_queue.get()
+            if input_item is None:
                 logger.debug('detector got item None')
                 break
-            frame_id, frame, timestamp_ms = item
-            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            # frame_id, frame, timestamp_ms = item
+            gray_frame = cv2.cvtColor(input_item.frame, cv2.COLOR_BGR2GRAY)
             if prev_frame is None:  # handle first frame
-                self.output_queue.put((frame_id, frame, timestamp_ms, ()))
+                output_item = OutputItem(
+                    frame=input_item.frame,
+                    frame_id=input_item.frame_id,
+                    timestamp_ms=input_item.timestamp_ms,
+                    contours=tuple(),
+                )
+                self.output_queue.put(output_item)
                 prev_frame = gray_frame
                 continue
-            contours = self._get_contours(gray_frame, prev_frame)
+            output_item = OutputItem(
+                frame=input_item.frame,
+                frame_id=input_item.frame_id,
+                timestamp_ms=input_item.timestamp_ms,
+                contours=self._get_contours(gray_frame, prev_frame),
+            )
+            self.output_queue.put(output_item)
             prev_frame = gray_frame
-            self.output_queue.put((frame_id, frame, timestamp_ms, contours))
-            logger.debug("detector processed frame %s", frame_id)
+            logger.debug("detector processed frame %s", input_item.frame_id)
         self.output_queue.put(None)
         logger.info("detector finished.")
 

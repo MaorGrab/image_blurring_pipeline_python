@@ -2,6 +2,7 @@ from multiprocessing import Process
 
 import cv2
 
+from image_blurring_pipeline_python.models.queue_items import InputItem
 from image_blurring_pipeline_python.logger.logger_manager import configure_process_logger
 
 
@@ -31,7 +32,8 @@ class Streamer(Process):
                 break
             timestamp_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
 
-            self.input_queue.put((frame_id, frame, timestamp_ms))
+            input_item = InputItem(frame=frame, frame_id=frame_id, timestamp_ms=timestamp_ms)
+            self.input_queue.put(input_item)
             logger.debug("Enqueued frame %s", frame_id)
             frame_id += 1
 
