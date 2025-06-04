@@ -15,18 +15,20 @@ image-blurring-pipeline/
 ├── docs/
 │   └── README.md                 # This file
 └── image_blurring_pipeline_python/
-    ├── __main__.py               # CLI entry point
+    ├── __main__.py               # Main script and CLI entry point
     ├── config/
     │   └── constants.py          # Global constants and configurations
     ├── cli/
     │   └── parse_args.py         # Argument parser for CLI usage
+    ├── models/
+    │   └── queue_items.py        # Queue items defined as classes
     ├── pipeline/
     │   ├── streamer.py           # Streamer process: reads and sends frames
     │   ├── detector.py           # Detector process: detects motion
     │   └── displayer.py          # Displayer process: draws detections
     └── logger/
-        ├── logger.py             # Logger process class
-        └── setup_process_logger.py # Logger setup function for processes
+        └── logger_manager.py     # Logger manager class and process logger setter
+        
 
 ````
 
