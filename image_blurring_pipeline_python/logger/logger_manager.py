@@ -1,4 +1,4 @@
-from multiprocessing import Process, Queue
+from multiprocessing import Queue
 import logging
 import logging.handlers
 import sys
