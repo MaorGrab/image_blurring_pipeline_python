@@ -38,5 +38,5 @@ class Streamer(Process):
             frame_id += 1
 
         cap.release()
-        self.input_queue.put(None)
+        self.input_queue.put(InputItem.termination())
         logger.info("streamer finished.")

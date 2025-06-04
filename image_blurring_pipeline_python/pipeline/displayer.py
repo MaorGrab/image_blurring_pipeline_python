@@ -25,8 +25,8 @@ class Displayer(Process):
 
         while True:
             output_item: OutputItem = self.output_queue.get()
-            if output_item is None:
-                logger.debug('detector got item None')
+            if output_item.is_termination:
+                logger.debug('displayer got termination item')
                 break
             if output_item.frame_id == next_frame_id_to_record:
                 self._alter_image_and_display(output_item)

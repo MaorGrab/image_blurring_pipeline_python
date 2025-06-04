@@ -24,8 +24,8 @@ class Detector(Process):
 
         while True:
             input_item: InputItem = self.input_queue.get()
-            if input_item is None:
-                logger.debug('detector got item None')
+            if input_item.is_termination:
+                logger.debug('detector got termination item')
                 break
             # frame_id, frame, timestamp_ms = item
             gray_frame = cv2.cvtColor(input_item.frame, cv2.COLOR_BGR2GRAY)
@@ -48,7 +48,7 @@ class Detector(Process):
             self.output_queue.put(output_item)
             prev_frame = gray_frame
             logger.debug("detector processed frame %s", input_item.frame_id)
-        self.output_queue.put(None)
+        self.output_queue.put(OutputItem.termination())
         logger.info("detector finished.")
 
     @staticmethod
