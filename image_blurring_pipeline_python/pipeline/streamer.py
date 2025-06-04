@@ -1,4 +1,5 @@
-from multiprocessing import Process
+from multiprocessing import Process, Queue
+from pathlib import Path
 
 import cv2
 
@@ -7,13 +8,13 @@ from image_blurring_pipeline_python.logger.logger_manager import configure_proce
 
 
 class Streamer(Process):
-    def __init__(self, input_path, input_queue, log_queue):
+    def __init__(self, input_path: Path, input_queue: Queue, log_queue: Queue) -> None:
         super().__init__()
-        self.input_path = input_path
-        self.input_queue = input_queue
-        self.log_queue = log_queue
+        self.input_path: Path = input_path
+        self.input_queue: Queue = input_queue
+        self.log_queue: Queue = log_queue
 
-    def run(self):
+    def run(self) -> None:
         """
         Reads video frames and puts them into the input_queue.
         """
@@ -25,12 +26,12 @@ class Streamer(Process):
             logger.error("Failed to open video file: %s", self.input_path)
             return
 
-        frame_id = 0
+        frame_id: int = 0
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
-            timestamp_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
+            timestamp_ms: int = cap.get(cv2.CAP_PROP_POS_MSEC)
 
             input_item = InputItem(frame=frame, frame_id=frame_id, timestamp_ms=timestamp_ms)
             self.input_queue.put(input_item)

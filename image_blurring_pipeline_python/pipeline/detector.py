@@ -1,5 +1,7 @@
-from multiprocessing import Process
+from multiprocessing import Process, Queue
+from typing import Union
 
+import numpy as np
 import cv2
 import imutils
 
@@ -8,19 +10,19 @@ from image_blurring_pipeline_python.logger.logger_manager import configure_proce
 
 
 class Detector(Process):
-    def __init__(self, input_queue, output_queue, log_queue):
+    def __init__(self, input_queue: Queue, output_queue: Queue, log_queue: Queue) -> None:
         super().__init__()
-        self.input_queue = input_queue
-        self.output_queue = output_queue
-        self.log_queue = log_queue
+        self.input_queue: Queue = input_queue
+        self.output_queue: Queue = output_queue
+        self.log_queue: Queue = log_queue
 
-    def run(self):
+    def run(self) -> None:
         """
         Processes frames: detects contours and puts them in the output queue.
         """
         logger = configure_process_logger(self.log_queue)
 
-        prev_frame = None
+        prev_frame: Union[np.ndarray, None] = None
 
         while True:
             input_item: InputItem = self.input_queue.get()
@@ -33,7 +35,7 @@ class Detector(Process):
                 timestamp_ms=input_item.timestamp_ms,
                 contours=tuple(),
             )
-            gray_frame = cv2.cvtColor(input_item.frame, cv2.COLOR_BGR2GRAY)
+            gray_frame: np.ndarray = cv2.cvtColor(input_item.frame, cv2.COLOR_BGR2GRAY)
             if prev_frame is None:  # handle first frame
                 self.output_queue.put(output_item)
                 prev_frame = gray_frame

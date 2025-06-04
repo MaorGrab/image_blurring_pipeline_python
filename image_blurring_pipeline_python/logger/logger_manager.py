@@ -1,18 +1,21 @@
 from multiprocessing import Queue
 import logging
 import logging.handlers
+from logging.handlers import QueueListener
 import sys
 import os
+from typing import Union
+from dataclasses import dataclass, field
 
 from image_blurring_pipeline_python.config import constants
 
 
+@dataclass
 class LoggerManager:
-    def __init__(self):
-        self.log_queue = Queue()
-        self.listener = None
+    log_queue: Queue = field(default_factory=Queue, init=False)
+    listener: Union[QueueListener, None] = field(default=None, init=False)
 
-    def start_listener(self):
+    def start_listener(self) -> None:
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
 
@@ -33,25 +36,25 @@ class LoggerManager:
             file_handler.setFormatter(formatter)
             root_logger.addHandler(file_handler)
 
-        self.listener = logging.handlers.QueueListener(
+        self.listener = QueueListener(
             self.log_queue,
             *root_logger.handlers,
             respect_handler_level=True,
         )
         self.listener.start()
 
-    def stop_listener(self):
+    def stop_listener(self) -> None:
         if self.listener:
             self.listener.stop()
         self.log_queue.close()
         self.log_queue.join_thread()
 
-    def get_queue(self):
+    def get_queue(self) -> Queue:
         return self.log_queue
 
 
-def configure_process_logger(log_queue: Queue, logger_name: str = 'process-logger'):
-    logger = logging.getLogger(logger_name)
+def configure_process_logger(log_queue: Queue, name: str = 'process-logger') -> logging.Logger:
+    logger = logging.getLogger(name)
     if logger.handlers:  # already exists, no need to define it
         return logger
     logger.setLevel(logging.DEBUG)

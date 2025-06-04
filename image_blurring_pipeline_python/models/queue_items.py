@@ -13,12 +13,12 @@ class _BaseQueueItem(ABC):
     _terminate: bool = field(default=False, init=False, repr=False, compare=False)
 
     @classmethod
-    def termination(cls):
+    def termination(cls) -> '_BaseQueueItem':
         instance = cls(**{f.name: None for f in fields(cls) if f.init})
         instance._terminate = True
         return instance
 
-    def set_termination(self):
+    def set_termination(self) -> None:
         self._terminate = True
 
     @property
