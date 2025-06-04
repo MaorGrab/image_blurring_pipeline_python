@@ -2,6 +2,7 @@
 
 A multiprocessing video analytics pipeline that performs motion detection and selective blurring on video frames using OpenCV. The system is designed for modularity, performance, and clarity.
 
+![](preview_image.png)
 ---
 ## Project Structure
 
