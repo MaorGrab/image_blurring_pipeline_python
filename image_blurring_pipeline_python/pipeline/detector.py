@@ -27,24 +27,18 @@ class Detector(Process):
             if input_item.is_termination:
                 logger.debug('detector got termination item')
                 break
-            # frame_id, frame, timestamp_ms = item
-            gray_frame = cv2.cvtColor(input_item.frame, cv2.COLOR_BGR2GRAY)
-            if prev_frame is None:  # handle first frame
-                output_item = OutputItem(
-                    frame=input_item.frame,
-                    frame_id=input_item.frame_id,
-                    timestamp_ms=input_item.timestamp_ms,
-                    contours=tuple(),
-                )
-                self.output_queue.put(output_item)
-                prev_frame = gray_frame
-                continue
             output_item = OutputItem(
                 frame=input_item.frame,
                 frame_id=input_item.frame_id,
                 timestamp_ms=input_item.timestamp_ms,
-                contours=self._get_contours(gray_frame, prev_frame),
+                contours=tuple(),
             )
+            gray_frame = cv2.cvtColor(input_item.frame, cv2.COLOR_BGR2GRAY)
+            if prev_frame is None:  # handle first frame
+                self.output_queue.put(output_item)
+                prev_frame = gray_frame
+                continue
+            output_item.contours = self._get_contours(gray_frame, prev_frame)
             self.output_queue.put(output_item)
             prev_frame = gray_frame
             logger.debug("detector processed frame %s", input_item.frame_id)
