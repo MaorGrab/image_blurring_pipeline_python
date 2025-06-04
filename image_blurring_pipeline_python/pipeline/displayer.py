@@ -3,7 +3,7 @@ from multiprocessing import Process
 
 import cv2
 
-from image_blurring_pipeline_python.logger.setup_process_logger import setup_process_logger
+from image_blurring_pipeline_python.logger.logger_manager import configure_process_logger
 from image_blurring_pipeline_python.config import constants
 
 
@@ -17,7 +17,7 @@ class Displayer(Process):
         """
         Displays processed frames.
         """
-        logger = setup_process_logger(self.log_queue)
+        logger = configure_process_logger(self.log_queue)
 
         buffer = {}  # frame_id: frame
         next_frame_id_to_record = 0

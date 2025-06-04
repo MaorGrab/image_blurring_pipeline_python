@@ -2,7 +2,7 @@ from multiprocessing import Process
 
 import cv2
 
-from image_blurring_pipeline_python.logger.setup_process_logger import setup_process_logger
+from image_blurring_pipeline_python.logger.logger_manager import configure_process_logger
 
 
 class Streamer(Process):
@@ -16,7 +16,7 @@ class Streamer(Process):
         """
         Reads video frames and puts them into the input_queue.
         """
-        logger = setup_process_logger(self.log_queue)
+        logger = configure_process_logger(self.log_queue)
 
         cap = cv2.VideoCapture(self.input_path)
         if not cap.isOpened():

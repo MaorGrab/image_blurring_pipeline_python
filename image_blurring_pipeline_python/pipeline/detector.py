@@ -3,7 +3,7 @@ from multiprocessing import Process
 import cv2
 import imutils
 
-from image_blurring_pipeline_python.logger.setup_process_logger import setup_process_logger
+from image_blurring_pipeline_python.logger.logger_manager import configure_process_logger
 
 
 class Detector(Process):
@@ -17,7 +17,7 @@ class Detector(Process):
         """
         Processes frames: detects contours and puts them in the output queue.
         """
-        logger = setup_process_logger(self.log_queue)
+        logger = configure_process_logger(self.log_queue)
 
         prev_frame = None
 
