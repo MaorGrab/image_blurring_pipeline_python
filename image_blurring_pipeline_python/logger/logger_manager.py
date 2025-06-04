@@ -2,6 +2,7 @@ from multiprocessing import Queue
 import logging
 import logging.handlers
 import sys
+import os
 
 from image_blurring_pipeline_python.config import constants
 
@@ -15,13 +16,20 @@ class LoggerManager:
         root_logger = logging.getLogger()
         root_logger.setLevel(constants.LOG_LEVEL)
 
+        formatter = logging.Formatter(
+            '[%(asctime)s] [%(processName)s] - %(levelname)s: %(message)s'
+        )
+
         if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
             console_handler = logging.StreamHandler(sys.stdout)
-            formatter = logging.Formatter(
-                '[%(asctime)s] [%(processName)s] - %(levelname)s: %(message)s'
-            )
             console_handler.setFormatter(formatter)
             root_logger.addHandler(console_handler)
+
+        os.makedirs(constants.LOG_DIR, exist_ok=True)
+        if not any(isinstance(h, logging.FileHandler) for h in root_logger.handlers):
+            file_handler = logging.FileHandler(constants.LOG_PATH)
+            file_handler.setFormatter(formatter)
+            root_logger.addHandler(file_handler)
 
         self.listener = logging.handlers.QueueListener(self.log_queue, *root_logger.handlers)
         self.listener.start()

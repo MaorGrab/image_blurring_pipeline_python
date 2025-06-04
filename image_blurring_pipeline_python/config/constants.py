@@ -12,4 +12,6 @@ DISPLAY_BOUNDING_BOXES = True
 
 # logger
 LOG_LEVEL = logging.DEBUG
-LOGGER_NAME = 'image_pipeline'
+LOG_FILE_NAME = 'image_pipeline.log'
+LOG_DIR = ROOT_DIR / 'logs'
+LOG_PATH = LOG_DIR / LOG_FILE_NAME
